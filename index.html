@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>unlisted | Mobile Optimized</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('Couple.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #1a1a1e;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh; /* 고정 높이 대신 최소 높이 사용 */
+            width: 100%;
+            overflow: hidden;
+            /* 모바일에서 롱탭 시 메뉴 뜨는 현상 방지 */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* 터치 시 파란 박스 생기는 현상 제거 */
+        * { -webkit-tap-highlight-color: transparent; }
+
+        .player-content, .outro-scene, .case-cover {
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+        }
+
+        .player-content, .outro-scene {
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .case-cover {
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px); /* iOS 지원 */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            width: 90%; /* 모바일에서 너비 자동 조절 */
+            max-width: 380px;
+        }
+
+        .player-group.active-player .case-cover {
+            transform: scale(0.9) translateY(-20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .player-group.active-player .player-content {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .outro-scene {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 60; text-align: center;
+        }
+
+        .outro-scene.active { opacity: 1; pointer-events: auto; }
+
+        .video-mask {
+            border-radius: 50%;
+            overflow: hidden;
+            /* 모바일 마스크 깨짐 방지 */
+            -webkit-mask-image: -webkit-radial-gradient(white, black);
+        }
+
+        .lyrics-window {
+            height: 100px; 
+            width: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lyric-line {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            transition: all 0.5s ease;
+            opacity: 0;
+            font-size: 1.1rem;
+            padding: 0 20px;
+            word-break: keep-all; /* 모바일에서 단어 잘림 방지 */
+        }
+
+        .lyric-line.current {
+            opacity: 1;
+            transform: translateY(-20px);
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .lyric-line.next {
+            opacity: 0.3;
+            transform: translateY(20px);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-audio" src="Pit_a_Pat.mp3" preload="auto"></audio>
+
+    <div id="main-group" class="player-group relative w-full flex items-center justify-center cursor-pointer px-4 min-h-screen">
+        
+        <div id="cover-ui" class="case-cover absolute py-10 px-6 flex flex-col justify-center items-center shadow-2xl overflow-hidden">
+            <div class="w-full flex flex-col items-center text-center z-10">
+                <span class="text-[10px] font-bold tracking-[0.3em] uppercase px-3 py-1.5 rounded-full border border-[#06B5D4]/40 text-[#06B5D4] bg-[#06B5D4]/10 mb-6">unlisted original</span>
+                <h1 class="text-3xl font-black tracking-tighter text-white mb-1 uppercase">Pit.a.Pat</h1>
+                <p class="text-zinc-400 text-[10px] font-medium tracking-widest mb-6 uppercase">Produced by unlisted</p>
+                <img src="Group 1707483564.png" alt="Comment" class="w-full h-auto rounded-2xl border border-white/10 shadow-xl opacity-90">
+            </div>
+            <div class="relative z-10 rounded-full p-[1.5px] overflow-hidden mt-8 active:scale-95 transition-transform">
+                <span class="absolute inset-0 bg-gradient-to-r from-[#06B5D4] via-[#308DEF] to-[#06B5D4]"></span>
+                <div class="relative px-8 py-3 bg-black rounded-full flex items-center gap-3">
+                    <span class="font-bold text-sm tracking-wide text-[#06B5D4]">Create Your Song</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="player-ui" class="player-content w-full flex flex-col items-center">
+            <div class="relative w-64 h-64 md:w-80 md:h-80 mb-8">
+                <div class="video-mask absolute inset-0 border-[8px] border-[#1e1e20] shadow-2xl bg-black">
+                    <video id="bg-video" muted loop playsinline class="w-full h-full object-cover">
+                        <source src="video6.mp4" type="video/mp4">
+                    </video>
+                    <div class="absolute inset-0 m-auto w-10 h-10 bg-[#0c0c0e] rounded-full border-[6px] border-[#1e1e20] z-20"></div>
+                </div>
+            </div>
+            
+            <div class="flex flex-col items-center text-center px-4">
+                <h2 class="text-3xl font-black tracking-tighter text-white uppercase mb-1">Pit.a.Pat</h2>
+                <p class="text-[10px] font-medium tracking-[0.1em] text-zinc-500 uppercase mb-6">Original Track by unlisted</p>
+                <div id="lyrics-window" class="lyrics-window"></div>
+            </div>
+        </div>
+
+        <div id="outro-scene" class="outro-scene">
+            <div class="text-white text-xl font-black mb-6">Want to create music<br>just for you?</div>
+            <img src="logo.png" class="h-8 opacity-80" onerror="this.src='https://via.placeholder.com/100x30/000000/FFFFFF?text=unlisted'">
+        </div>
+    </div>
+
+    <script>
+        const audio = document.getElementById('bg-audio');
+        const video = document.getElementById('bg-video');
+        const lyricsWindow = document.getElementById('lyrics-window');
+        const mainGroup = document.getElementById('main-group');
+        const playerUI = document.getElementById('player-ui');
+        const outroScene = document.getElementById('outro-scene');
+
+        const lyricsData = [
+            { time: 11, text: "You tap on my front porch step" },
+            { time: 14, text: "Blue shoes and a sundress swing" },
+            { time: 16.8, text: "You laugh and my ribcage jumps" },
+            { time: 19.2, text: "Like it wants to learn to sing" },
+            { time: 22, text: "Sun on your freckles," },
+            { time: 24, text: "Coffee in your hand" },
+            { time: 25.8, text: "You say “come on, Let’s go”" },
+            { time: 28.8, text: "And I’m already gone again" },
+            { time: 32.6, text: "Pitapat, Pitapat, My heart goes" },
+            { time: 35, text: "Every time you get that close" },
+            { time: 39, text: "Like a note I can’t hold back" }
+        ];
+
+        lyricsData.forEach((item, index) => {
+            const p = document.createElement('p');
+            p.id = `lyric-${index}`;
+            p.className = `lyric-line ${index === 0 ? 'next' : ''}`; 
+            p.innerText = item.text;
+            lyricsWindow.appendChild(p);
+        });
+
+        let isStarted = false;
+        let fadeOutStarted = false;
+
+        mainGroup.addEventListener('click', () => {
+            if (!isStarted) {
+                mainGroup.classList.add('active-player');
+                // iOS 대응: 유저 클릭 이벤트 안에서 비디오/오디오 동시 실행
+                audio.play();
+                video.play();
+                isStarted = true;
+            }
+        });
+
+        function startFadeOut() {
+            if (fadeOutStarted) return;
+            fadeOutStarted = true;
+            const fadeInterval = setInterval(() => {
+                if (audio.volume > 0.05) { audio.volume -= 0.05; } 
+                else {
+                    audio.volume = 0;
+                    clearInterval(fadeInterval);
+                    audio.pause();
+                    video.pause();
+                    playerUI.style.opacity = "0";
+                    setTimeout(() => {
+                        playerUI.classList.add('hidden-scene');
+                        outroScene.classList.add('active');
+                    }, 500);
+                }
+            }, 50); 
+        }
+
+        audio.addEventListener('timeupdate', () => {
+            const currentTime = audio.currentTime;
+            if (currentTime >= 34.0 && !fadeOutStarted) startFadeOut();
+
+            let currentIndex = -1;
+            for (let i = 0; i < lyricsData.length; i++) {
+                if (currentTime >= lyricsData[i].time) currentIndex = i;
+            }
+
+            if (currentIndex !== -1) {
+                lyricsData.forEach((_, index) => {
+                    const el = document.getElementById(`lyric-${index}`);
+                    el.classList.remove('current', 'next');
+                    el.style.opacity = "0"; 
+                });
+
+                const currentEl = document.getElementById(`lyric-${currentIndex}`);
+                const nextEl = document.getElementById(`lyric-${currentIndex + 1}`);
+
+                if (currentEl) currentEl.classList.add('current');
+                if (nextEl) nextEl.classList.add('next');
+            }
+        });
+    </script>
+</body>
+</html>
